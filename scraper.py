@@ -145,8 +145,8 @@ for x in xrange(upto, len(periods)):
                     data['entityName'] = item.attrs['label']
                     data['cleanName'] = cleanName
 
-                    if data:
-                        #print data
+                    # if data:
+                    #     #print data
                     scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
 
 
