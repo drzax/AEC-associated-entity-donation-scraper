@@ -92,7 +92,7 @@ for x in xrange(upto, len(periods)):
             for tr in trs[1:]:
                 tds = tr.cssselect("td")
                 try:
-                    print lxml.html.tostring(tds[0])
+                    #print lxml.html.tostring(tds[0])
                     donType = lxml.html.tostring(tds[0]).split('<a href="')[1].split('.aspx?')[0]
                     #print donType
                     submissionID = lxml.html.tostring(tds[0]).split('SubmissionId=')[1].split('&amp;ClientId=')[0]
