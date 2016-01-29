@@ -146,7 +146,7 @@ for x in xrange(upto, len(periods)):
                     data['cleanName'] = cleanName
 
                     if data:
-                        print data
+                        #print data
                     scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
 
 
