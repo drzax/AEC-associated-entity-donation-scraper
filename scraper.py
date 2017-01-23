@@ -10,7 +10,6 @@ import traceback
  
 annDonorsurl = "http://periodicdisclosures.aec.gov.au/AnalysisAssociatedEntity.aspx"
  
-
 periods = [
 {"year":"1998-1999","id":"1"},
 {"year":"1999-2000","id":"2"},
@@ -27,135 +26,133 @@ periods = [
 {"year":"2010-2011","id":"48"},
 {"year":"2011-2012","id":"49"},
 {"year":"2012-2013","id":"51"},
-{"year":"2013-2014","id":"55"}
+{"year":"2013-2014","id":"55"},
+{"year":"2014-2015","id":"56"}
 ]
 
 #Check if scraper has been run before, see where it got up to
 
 if scraperwiki.sqlite.get_var('upto'):
-    upto = scraperwiki.sqlite.get_var('upto')
-    print "Scraper upto:",upto,"period:",periods[upto]['year']
+	upto = scraperwiki.sqlite.get_var('upto')
+	print "Scraper upto:",upto,"period:",periods[upto]['year']
 else:
-    print "Scraper first run"
-    upto = 0    
+	print "Scraper first run"
+	upto = 0    
 
 #to run entirely again, just set upto to 0 
 upto = 0  
 
-#unique number for every entry
-
+#unique number for every entry to avoid issues with very similar donations
 count = 0
 
 for x in xrange(upto, len(periods)):
-    br = mechanize.Browser()
-    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
-    response = br.open(annDonorsurl)
-    print "Loading data for "+periods[x]['year']
+	br = mechanize.Browser()
+	br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+	response = br.open(annDonorsurl)
+	print "Loading data for "+periods[x]['year']
 
-    
-
-    br.select_form(nr=0)
-    # for i,form in enumerate(br.forms()):
-    #     print i
-    #     print form
+	br.select_form(nr=0)
+	# for i,form in enumerate(br.forms()):
+	#     print i
+	#     print form
  
-    br['ctl00$dropDownListPeriod']=[periods[x]['id']]
-    response = br.submit("ctl00$buttonGo")
+	br['ctl00$dropDownListPeriod']=[periods[x]['id']]
+	response = br.submit("ctl00$buttonGo")
 
-    response = br.open(annDonorsurl)
-    br.select_form(nr=0)
+	response = br.open(annDonorsurl)
+	br.select_form(nr=0)
 
-    items = br.form.controls[10].get_items()
+	items = br.form.controls[10].get_items()
 
-    for item in items:
-        print item.name
-        print "Entity:", item.attrs['label']
+	for item in items:
+		print item.name
+		print "Entity:", item.attrs['label']
 
-        response = br.open(annDonorsurl)
-        br.select_form(nr=0)
-        br['ctl00$ContentPlaceHolderBody$dropDownListEntities']=[item.name]
-        response = br.submit("ctl00$ContentPlaceHolderBody$analysisControl$buttonAnalyse")
+		response = br.open(annDonorsurl)
+		br.select_form(nr=0)
+		br['ctl00$ContentPlaceHolderBody$dropDownListEntities']=[item.name]
+		response = br.submit("ctl00$ContentPlaceHolderBody$analysisControl$buttonAnalyse")
 
-        try:
-            br.select_form(nr=0)
-            br['ctl00$ContentPlaceHolderBody$pagingControl$cboPageSize']=["500"]
-            response = br.submit("ctl00$ContentPlaceHolderBody$pagingControl$buttonGo")
+		try:
+			br.select_form(nr=0)
+			br['ctl00$ContentPlaceHolderBody$pagingControl$cboPageSize']=["500"]
+			response = br.submit("ctl00$ContentPlaceHolderBody$pagingControl$buttonGo")
 
-            html = response.read()
-            #print html
-
-
-            root = lxml.html.fromstring(html)
-            trs = root.cssselect("#ContentPlaceHolderBody_gridViewAnalysis tr")
-
-        
-            for tr in trs[1:]:
-                tds = tr.cssselect("td")
-                try:
-                    #print lxml.html.tostring(tds[0])
-                    donType = lxml.html.tostring(tds[0]).split('<a href="')[1].split('.aspx?')[0]
-                    #print donType
-                    submissionID = lxml.html.tostring(tds[0]).split('SubmissionId=')[1].split('&amp;ClientId=')[0]
-                    #print submissionID
-                    clientID = lxml.html.tostring(tds[0]).split('ClientId=')[1].split('">')[0]
-                    #print clientID
-                    donName = lxml.html.tostring(tds[0]).split('">')[2].split('</a')[0]
-                    #print donName
-                    address = tds[1].text
-                    #print address
-                    state = tds[2].text
-                    #print state
-                    postcode = tds[3].text
-                    #print postcode
-                    receiptType = tds[4].text
-                    #print receiptType
-                    value = tds[5].text.replace("$", "").replace(",","")
-                    #print value
-                    donUrl = lxml.html.tostring(tds[0]).split('<a href="')[1].split('">')[0]
-                    #print donUrl 
+			html = response.read()
+			#print html
 
 
-                    fixedUrl = 'http://periodicdisclosures.aec.gov.au/' + donUrl.replace("amp;","")
-                    html = requests.get(fixedUrl).content
-                    dom = lxml.html.fromstring(html)
-                    h2s = dom.cssselect(".rightColfadWideHold h2")
-                    if donType == "Donor" or donType == "AssociatedEntity":
-                        cleanName = h2s[0].text.strip()
-                        #print cleanName.strip()
-                    if donType == "Party":
-                        cleanName = h2s[1].text.strip()
-                        #print cleanName.strip()
+			root = lxml.html.fromstring(html)
+			trs = root.cssselect("#ContentPlaceHolderBody_gridViewAnalysis tr")
+
+		
+			for tr in trs[1:]:
+				tds = tr.cssselect("td")
+				try:
+					#print lxml.html.tostring(tds[0])
+					donType = lxml.html.tostring(tds[0]).split('<a href="')[1].split('.aspx?')[0]
+					#print donType
+					submissionID = lxml.html.tostring(tds[0]).split('SubmissionId=')[1].split('&amp;ClientId=')[0]
+					#print submissionID
+					clientID = lxml.html.tostring(tds[0]).split('ClientId=')[1].split('">')[0]
+					#print clientID
+					donName = lxml.html.tostring(tds[0]).split('">')[2].split('</a')[0]
+					#print donName
+					address = tds[1].text
+					#print address
+					state = tds[2].text
+					#print state
+					postcode = tds[3].text
+					#print postcode
+					receiptType = tds[4].text
+					#print receiptType
+					value = tds[5].text.replace("$", "").replace(",","")
+					#print value
+					donUrl = lxml.html.tostring(tds[0]).split('<a href="')[1].split('">')[0]
+					#print donUrl 
 
 
-                    count += 1
-                    data = {}
-                    data['donType'] = donType
-                    data['submissionID'] = submissionID
-                    data['clientID'] = clientID
-                    data['donName'] = donName
-                    data['address'] = address
-                    data['state'] = state
-                    data['postcode'] = postcode
-                    data['receiptType'] = receiptType
-                    data['value'] = value
-                    data['donUrl'] = donUrl
-                    data['count'] = count
-                    data['entityID'] = item.name
-                    data['period'] = periods[x]['year']
-                    data['entityName'] = item.attrs['label']
-                    data['cleanName'] = cleanName
-
-                    # if data:
-                    #     #print data
-                    scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
+					fixedUrl = 'http://periodicdisclosures.aec.gov.au/' + donUrl.replace("amp;","")
+					html = requests.get(fixedUrl).content
+					dom = lxml.html.fromstring(html)
+					h2s = dom.cssselect(".rightColfadWideHold h2")
+					if donType == "Donor" or donType == "AssociatedEntity":
+						cleanName = h2s[0].text.strip()
+						#print cleanName.strip()
+					if donType == "Party":
+						cleanName = h2s[1].text.strip()
+						#print cleanName.strip()
 
 
-                except Exception, e:
-                    #print e
-                    #print traceback.print_exc()
-                    print "Nothing here"
+					count += 1
+					data = {}
+					data['donType'] = donType
+					data['submissionID'] = submissionID
+					data['clientID'] = clientID
+					data['donName'] = donName
+					data['address'] = address
+					data['state'] = state
+					data['postcode'] = postcode
+					data['receiptType'] = receiptType
+					data['value'] = value
+					data['donUrl'] = donUrl
+					data['count'] = count
+					data['entityID'] = item.name
+					data['period'] = periods[x]['year']
+					data['entityName'] = item.attrs['label']
+					data['cleanName'] = cleanName
 
-        except Exception, e:
-                    #print e
-                    #print traceback.print_exc()
-                    print "Nothing here"  
+					if data:
+						print data
+					scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
+
+
+				except Exception, e:
+					print e
+					print traceback.print_exc()
+					print "Nothing here"
+
+		except Exception, e:
+					print e
+					print traceback.print_exc()
+					print "Nothing here"  
