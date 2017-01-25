@@ -95,66 +95,58 @@ for x in xrange(upto, len(periods)):
 	
 		for tr in trs[1:]:
 			tds = tr.cssselect("td")
-			try:
-				#print lxml.html.tostring(tds[0])
-				donType = lxml.html.tostring(tds[0]).split('<a href="')[1].split('.aspx?')[0]
-				#print donType
-				submissionID = lxml.html.tostring(tds[0]).split('SubmissionId=')[1].split('&amp;ClientId=')[0]
-				#print submissionID
-				clientID = lxml.html.tostring(tds[0]).split('ClientId=')[1].split('">')[0]
-				#print clientID
-				donName = lxml.html.tostring(tds[0]).split('">')[2].split('</a')[0]
-				#print donName
-				address = tds[1].text
-				#print address
-				state = tds[2].text
-				#print state
-				postcode = tds[3].text
-				#print postcode
-				receiptType = tds[4].text
-				#print receiptType
-				value = tds[5].text.replace("$", "").replace(",","")
-				#print value
-				donUrl = lxml.html.tostring(tds[0]).split('<a href="')[1].split('">')[0]
-				#print donUrl 
+			#print lxml.html.tostring(tds[0])
+			donType = lxml.html.tostring(tds[0]).split('<a href="')[1].split('.aspx?')[0]
+			#print donType
+			submissionID = lxml.html.tostring(tds[0]).split('SubmissionId=')[1].split('&amp;ClientId=')[0]
+			#print submissionID
+			clientID = lxml.html.tostring(tds[0]).split('ClientId=')[1].split('">')[0]
+			#print clientID
+			donName = lxml.html.tostring(tds[0]).split('">')[2].split('</a')[0]
+			#print donName
+			address = tds[1].text
+			#print address
+			state = tds[2].text
+			#print state
+			postcode = tds[3].text
+			#print postcode
+			receiptType = tds[4].text
+			#print receiptType
+			value = tds[5].text.replace("$", "").replace(",","")
+			#print value
+			donUrl = lxml.html.tostring(tds[0]).split('<a href="')[1].split('">')[0]
+			#print donUrl 
 
 
-				fixedUrl = 'http://periodicdisclosures.aec.gov.au/' + donUrl.replace("amp;","")
-				html = requests.get(fixedUrl).content
-				dom = lxml.html.fromstring(html)
-				h2s = dom.cssselect(".rightColfadWideHold h2")
-				if donType == "Donor" or donType == "AssociatedEntity":
-					cleanName = h2s[0].text.strip()
-					#print cleanName.strip()
-				if donType == "Party":
-					cleanName = h2s[1].text.strip()
-					#print cleanName.strip()
+			fixedUrl = 'http://periodicdisclosures.aec.gov.au/' + donUrl.replace("amp;","")
+			html = requests.get(fixedUrl).content
+			dom = lxml.html.fromstring(html)
+			h2s = dom.cssselect(".rightColfadWideHold h2")
+			if donType == "Donor" or donType == "AssociatedEntity":
+				cleanName = h2s[0].text.strip()
+				#print cleanName.strip()
+			if donType == "Party":
+				cleanName = h2s[1].text.strip()
+				#print cleanName.strip()
 
+			count += 1
+			data = {}
+			data['donType'] = donType
+			data['submissionID'] = submissionID
+			data['clientID'] = clientID
+			data['donName'] = donName
+			data['address'] = address
+			data['state'] = state
+			data['postcode'] = postcode
+			data['receiptType'] = receiptType
+			data['value'] = value
+			data['donUrl'] = donUrl
+			data['count'] = count
+			data['entityID'] = item.name
+			data['period'] = periods[x]['year']
+			data['entityName'] = item.attrs['label']
+			data['cleanName'] = cleanName
 
-				count += 1
-				data = {}
-				data['donType'] = donType
-				data['submissionID'] = submissionID
-				data['clientID'] = clientID
-				data['donName'] = donName
-				data['address'] = address
-				data['state'] = state
-				data['postcode'] = postcode
-				data['receiptType'] = receiptType
-				data['value'] = value
-				data['donUrl'] = donUrl
-				data['count'] = count
-				data['entityID'] = item.name
-				data['period'] = periods[x]['year']
-				data['entityName'] = item.attrs['label']
-				data['cleanName'] = cleanName
-
-				if data:
-					print data
-				scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
-
-
-			except Exception, e:
-				print e
-				print traceback.print_exc()
-				print "Nothing here"
+			if data:
+				print data
+			scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
