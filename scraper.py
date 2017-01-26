@@ -31,8 +31,6 @@ else:
 #to run entirely again, just set upto to 0 
 # upto = 0  
 
-#unique number for every entry to avoid issues with very similar donations
-count = 0
 
 for x in xrange(upto, len(periods)):
 	br = mechanize.Browser()
@@ -54,6 +52,9 @@ for x in xrange(upto, len(periods)):
 	items = br.form.controls[10].get_items()
 
 	for item in items:
+                # unique number for every entry (per entity per year) to avoid issues with very similar donations
+                # and make it possible to re-run with different years enabled without messing up the DB.
+                count = 0
 		print item.name
 		print "Entity:", item.attrs['label']
 
