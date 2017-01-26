@@ -1,0 +1,11 @@
+alembic==0.8.10
+cssselect==1.0.1
+lxml==3.7.2
+Mako==1.0.6
+MarkupSafe==0.23
+mechanize==0.2.5
+python-editor==1.0.3
+requests==2.12.5
+scraperwiki==0.5.1
+six==1.10.0
+SQLAlchemy==1.1.5
