@@ -150,4 +150,4 @@ for x in xrange(upto, len(periods)):
 
 			if data:
 # 				print data
-			scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
+				scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
