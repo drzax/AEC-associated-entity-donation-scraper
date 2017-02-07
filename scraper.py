@@ -9,27 +9,28 @@ import requests
 import traceback
 
 annDonorsurl = "http://periodicdisclosures.aec.gov.au/AnalysisAssociatedEntity.aspx"
-
 periods = [
-{"year":"1998-1999","id":"1"},
-{"year":"1999-2000","id":"2"},
-{"year":"2000-2001","id":"3"},
-{"year":"2001-2002","id":"4"},
-{"year":"2002-2003","id":"5"},
-{"year":"2003-2004","id":"6"},
-{"year":"2004-2005","id":"7"},
-{"year":"2005-2006","id":"8"},
-{"year":"2006-2007","id":"9"},
-{"year":"2007-2008","id":"10"},
-{"year":"2008-2009","id":"23"},
-{"year":"2009-2010","id":"24"},
-{"year":"2010-2011","id":"48"},
-{"year":"2011-2012","id":"49"},
-{"year":"2012-2013","id":"51"},
-{"year":"2013-2014","id":"55"},
-{"year":"2014-2015","id":"56"},
-{"year":"2015-2016","id":"60"}
+	{"year":"1998-1999","id":"1"},
+	{"year":"1999-2000","id":"2"},
+	{"year":"2000-2001","id":"3"},
+	{"year":"2001-2002","id":"4"},
+	{"year":"2002-2003","id":"5"},
+	{"year":"2003-2004","id":"6"},
+	{"year":"2004-2005","id":"7"},
+	{"year":"2005-2006","id":"8"},
+	{"year":"2006-2007","id":"9"},
+	{"year":"2007-2008","id":"10"},
+	{"year":"2008-2009","id":"23"},
+	{"year":"2009-2010","id":"24"},
+	{"year":"2010-2011","id":"48"},
+	{"year":"2011-2012","id":"49"},
+	{"year":"2012-2013","id":"51"},
+	{"year":"2013-2014","id":"55"},
+	{"year":"2014-2015","id":"56"},
+	{"year":"2015-2016","id":"60"}
 ]
+
+cachedRequests = {};
 
 #Check if scraper has been run before, see where it got up to
 if scraperwiki.sqlite.get_var('upto'):
@@ -42,8 +43,10 @@ else:
 #to run entirely again, just set upto to 0
 # upto = 0
 
-
 for x in xrange(upto, len(periods)):
+
+	cachedRequests[x] = {};
+
 	br = mechanize.Browser()
 	br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
 	response = br.open(annDonorsurl)
@@ -116,11 +119,16 @@ for x in xrange(upto, len(periods)):
 			donUrl = lxml.html.tostring(tds[0]).split('<a href="')[1].split('">')[0]
 			#print donUrl
 
-
 			fixedUrl = 'http://periodicdisclosures.aec.gov.au/' + donUrl.replace("amp;","")
-			html = requests.get(fixedUrl).content
-			dom = lxml.html.fromstring(html)
-			h2s = dom.cssselect(".rightColfadWideHold h2")
+
+			if fixedUrl not in cachedRequests[x]:
+				html = requests.get(fixedUrl).content
+				cachedRequests[x][fixedUrl] = lxml.html.fromstring(html)
+				print "requesting", fixedUrl
+			else:
+				print "Cache hit"
+
+			h2s = cachedRequests[x][fixedUrl].cssselect(".rightColfadWideHold h2")
 			if donType == "Donor" or donType == "AssociatedEntity":
 				cleanName = h2s[0].text.strip()
 				#print cleanName.strip()
@@ -149,3 +157,5 @@ for x in xrange(upto, len(periods)):
 			if data:
 				# print data
 				scraperwiki.sqlite.save(unique_keys=["count","donUrl","period"], data=data)
+
+	scraperwiki.sqlite.save_var('upto', x+1)
